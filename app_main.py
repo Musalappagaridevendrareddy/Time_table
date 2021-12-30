@@ -2,8 +2,45 @@ import streamlit as st
 import pandas as pd 
 from db_file import * 
 import streamlit.components.v1 as stc
- 
 
+
+# Security
+#passlib,hashlib,bcrypt,scrypt
+import hashlib
+def make_hashes(password):
+	return hashlib.sha256(str.encode(password)).hexdigest()
+
+def check_hashes(password,hashed_text):
+	if make_hashes(password) == hashed_text:
+		return hashed_text
+	return False
+# DB Management
+import sqlite3 
+conn = sqlite3.connect('data_main.db')
+c = conn.cursor()
+# DB  Functions
+def create_usertable():
+	c.execute('CREATE TABLE IF NOT EXISTS userstable(username TEXT,password TEXT)')
+
+
+def add_userdata(username,password):
+	c.execute('INSERT INTO userstable(username,password) VALUES (?,?)',(username,password))
+	conn.commit()
+
+def login_user(username,password):
+	c.execute('SELECT * FROM userstable WHERE username =? AND password = ?',(username,password))
+	data = c.fetchall()
+	return data
+
+def del_user(username):
+	c.execute('DELETE FROM userstable WHERE username = ?',(username,))
+	conn.commit()
+
+
+def view_all_users():
+	c.execute('SELECT * FROM userstable')
+	data = c.fetchall()
+	return data
 
 HTML_BANNER = """
     <div style="background-color:#464e5f;padding:10px;border-radius:10px">
@@ -11,14 +48,13 @@ HTML_BANNER = """
     <p style="color:white;text-align:center;">Built with Streamlit</p>
     </div>
     """
+con = st.container()
 
-
-def main():
-	con = st.container()
+def app(u_name):
 	stc.html(HTML_BANNER)
 	menu = ["Create","Read","Update","Delete","About", "Table"]
 	choice = st.selectbox("Menu",menu,key='choice')
-	create_table()
+	create_table(u_name)
 
 	if choice == "Create":
 		st.subheader("Add Course")
@@ -33,14 +69,14 @@ def main():
 			day = st.selectbox("Day",["Monday","Tuesday","Wednesday","Thursday","Friday"],key='day')
 
 		if st.button("Add Course"):
-			add_data(task,task_status,str(task_due_date),day)
+			add_data(u_name, task,task_status,str(task_due_date),day)
 			con.success("Added {} to Database".format(task))
 
 
 	elif choice == "Read":
 		# st.subheader("View Items")
 		with st.expander("View All"):
-			result = view_all_data()
+			result = view_all_data(u_name)
 			# st.write(result)
 			clean_df = pd.DataFrame(result,columns=["CourseID","Link","Time","Day"])
 			st.dataframe(clean_df)
@@ -48,14 +84,14 @@ def main():
 	elif choice == "Update":
 		st.subheader("Edit Courses")
 		with st.expander("Current Data"):
-			result = view_all_data()
+			result = view_all_data(u_name)
 			# st.write(result)
 			clean_df = pd.DataFrame(result,columns=["CourseID","Link","Time","Day"])
 			st.dataframe(clean_df)
 
-		list_of_tasks = [i[0] for i in view_all_task_names()]
+		list_of_tasks = [i[0] for i in view_all_task_names(u_name)]
 		selected_task = st.selectbox("Courses",list_of_tasks,key='selected_task')
-		task_result = get_task(selected_task)
+		task_result = get_task(u_name, selected_task)
 		# st.write(task_result)
 
 		if task_result:
@@ -75,11 +111,11 @@ def main():
 				new_task_due_date = st.text_input("Time", (task_due_date))
 
 			if st.button("Update Task"):
-				edit_task_data(new_task,new_task_status,str(new_task_due_date),new_day,task,task_status,task_due_date,day)
+				edit_task_data(u_name, new_task,new_task_status,str(new_task_due_date),new_day,task,task_status,task_due_date,day)
 				con.success("Updated -- {} ---> {}".format(task,new_task))
 
 			with st.expander("View Updated Data"):
-				result = view_all_data()
+				result = view_all_data(u_name)
 				# st.write(result)
 				clean_df = pd.DataFrame(result,columns=["CourseID","Link","Time","Day"])
 				st.dataframe(clean_df)
@@ -88,25 +124,25 @@ def main():
 	elif choice == "Delete":
 		st.subheader("Delete")
 		with st.expander("View Data"):
-			result = view_all_data()
+			result = view_all_data(u_name)
 			# st.write(result)
 			clean_df = pd.DataFrame(result,columns=["CourseID","Link","Time","Day"])
 			st.dataframe(clean_df)
 
-		unique_list = [i[0] for i in view_all_task_names()]
+		unique_list = [i[0] for i in view_all_task_names(u_name)]
 		delete_by_task_name =  st.selectbox("Select CourseID",unique_list,key='delete_by_task_name')
 		if st.button("Delete"):
 			delete_data(delete_by_task_name)
 			st.warning("Deleted: '{}'".format(delete_by_task_name))
 
 		with st.expander("Updated Data"):
-			result = view_all_data()
+			result = view_all_data(u_name)
 			# st.write(result)
 			clean_df = pd.DataFrame(result,columns=["CourseID","Link","Time","Day"])
 			st.dataframe(clean_df)
 
 	elif choice == "Table":
-		result = view_all_data()
+		result = view_all_data(u_name)
 		if result:
 			df = pd.DataFrame(result,columns=["CourseID","Link", "Time","Day"])
 			gp = df.groupby(['Day'])
@@ -146,6 +182,61 @@ def main():
 	else:
 		st.subheader("Time Table App")
 		st.info("Built with Streamlit")
+
+
+def main():
+	"""Simple Login App"""
+
+	st.title("Simple Login App")
+
+	menu = ["Home","Login","SignUp"]
+	choice = st.sidebar.selectbox("Menu",menu,key='main_choice')
+
+	if choice == "Home":
+		st.subheader("Home")
+
+	elif choice == "Login":
+		st.sidebar.subheader("Login Section")
+
+		username = st.sidebar.text_input("User Name")
+		password = st.sidebar.text_input("Password",type='password')
+		Login = st.sidebar.checkbox("Login")
+		if Login:
+			# if password == '12345':
+			create_usertable()
+			hashed_pswd = make_hashes(password)
+
+			result = login_user(username,check_hashes(password,hashed_pswd))
+			if result:
+
+				con.success("Logged In as {}".format(username))
+				app(username)
+
+				delete = st.sidebar.button("Delete User")
+				if delete:
+					delete_user(username)
+					del_user(username)
+					con.success("Deleted User! Sorry to see you go")
+
+				
+			else:
+				con.warning("Incorrect Username/Password")
+
+
+
+
+
+	elif choice == "SignUp":
+		st.sidebar.subheader("Create New Account")
+		new_user = st.sidebar.text_input("Username")
+		new_password = st.sidebar.text_input("Password",type='password')
+
+		if st.sidebar.button("Signup"):
+			create_usertable()
+			add_userdata(new_user,make_hashes(new_password))
+			con.success("You have successfully created a valid Account")
+			con.info("Go to Login Menu to login")
+
 
 
 if __name__ == '__main__':
