@@ -91,7 +91,7 @@ def main():
 			result = view_all_data()
 			# st.write(result)
 			clean_df = pd.DataFrame(result,columns=["CourseID","Link","Time","Day"])
-			# st.dataframe(clean_df)
+			st.dataframe(clean_df)
 
 		unique_list = [i[0] for i in view_all_task_names()]
 		delete_by_task_name =  st.selectbox("Select CourseID",unique_list)
