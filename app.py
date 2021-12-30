@@ -2,11 +2,7 @@ import streamlit as st
 import pandas as pd 
 from db_file import * 
 import streamlit.components.v1 as stc
-
-
-
-# Data Viz Pkgs
-import plotly.express as px 
+ 
 
 
 HTML_BANNER = """
