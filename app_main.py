@@ -132,7 +132,7 @@ def app(u_name):
 		unique_list = [i[0] for i in view_all_task_names(u_name)]
 		delete_by_task_name =  st.selectbox("Select CourseID",unique_list,key='delete_by_task_name')
 		if st.button("Delete"):
-			delete_data(delete_by_task_name)
+			delete_data(u_name, delete_by_task_name)
 			st.warning("Deleted: '{}'".format(delete_by_task_name))
 
 		with st.expander("Updated Data"):
@@ -208,7 +208,7 @@ def main():
 
 			result = login_user(username,check_hashes(password,hashed_pswd))
 			if result:
-				# st.balloons()
+				st.balloons()
 				con.success("Logged In as {}".format(username))
 				app(username)
 
