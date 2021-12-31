@@ -208,7 +208,7 @@ def main():
 
 			result = login_user(username,check_hashes(password,hashed_pswd))
 			if result:
-
+				st.balloons()
 				con.success("Logged In as {}".format(username))
 				app(username)
 
