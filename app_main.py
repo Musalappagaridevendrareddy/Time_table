@@ -157,8 +157,9 @@ Leasure
      
     if any([J1, J2, J3, J4, J5]):
         Timer()
-        container.success('Link Generated!')
-        st.markdown("Link: 🥺 https://meet.google.com/fza-jkpb-xjj 🥺")
+        st.markdown("Link: 🥺 https://zoom.us/j/2904303765?pwd=YzBCcmhrYjVKcVRCbWVNd1VYaFkwQT09 🥺")
+        "Passcode:  Don't Spread it as Corona!🤔"
+        st.code('12345')
         Random()
     elif any([S1, S2, S3]):
         Timer()
